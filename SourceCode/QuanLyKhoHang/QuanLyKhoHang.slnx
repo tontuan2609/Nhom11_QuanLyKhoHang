@@ -1,6 +1,3 @@
 <Solution>
-  <Project Path="BLL/BLL.csproj" />
-  <Project Path="DAL/DAL.csproj" />
-  <Project Path="DTO/DTO.csproj" />
-  <Project Path="GUI/GUI.csproj" />
+  <Project Path="QuanLyKhoHang/QuanLyKhoHang.csproj" />
 </Solution>
