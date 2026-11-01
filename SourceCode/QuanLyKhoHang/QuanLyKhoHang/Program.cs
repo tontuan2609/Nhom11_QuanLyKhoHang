@@ -1,22 +1,39 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace QuanLyKhoHang
 {
     internal static class Program
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+
+            while (true)
+            {
+                using (FrmLogin dangNhap = new FrmLogin())
+                {
+                    if (dangNhap.ShowDialog() != DialogResult.OK)
+                    {
+                        break;
+                    }
+                }
+
+                bool dangXuat;
+                using (FrmMain chinh = new FrmMain())
+                {
+                    Application.Run(chinh);
+                    dangXuat = chinh.DangXuat;
+                }
+
+                PhienDangNhap.DangXuat();
+                if (!dangXuat)
+                {
+                    break;
+                }
+            }
         }
     }
 }
