@@ -4,10 +4,10 @@ using System.Windows.Forms;
 namespace QuanLyKhoHang
 {
     /// <summary>
-    /// Điểm khởi chạy riêng biệt để test trực tiếp giao diện Form Thành Viên 2
+    /// Điểm khởi chạy riêng biệt để test trực tiếp giao diện Form Thành Viên 3
     /// (Tra cứu lịch sử nhập xuất, Tính tồn kho Stored Proc, Xuất CSV, Biểu đồ GDI+, In phiếu kho PrintDocument).
     /// </summary>
-    internal static class ProgramThanhVien2
+    internal static class ProgramThanhVien3
     {
         [STAThread]
         static void Main()
@@ -18,3 +18,4 @@ namespace QuanLyKhoHang
         }
     }
 }
+

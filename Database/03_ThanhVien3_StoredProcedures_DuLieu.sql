@@ -3,7 +3,7 @@ GO
 
 -- =========================================================================
 -- ĐỒ ÁN CUỐI KỲ: LẬP TRÌNH TRÊN WINDOWS - QUẢN LÝ KHO HÀNG
--- PHẦN THỰC HIỆN CỦA THÀNH VIÊN:
+-- PHẦN THỰC HIỆN CỦA THÀNH VIÊN 3:
 -- 1. Tính tồn kho qua Stored Procedure
 -- 2. Tra cứu lịch sử nhập xuất theo khoảng ngày
 -- 3. Xuất file CSV (Báo cáo tồn kho & Lịch sử phiếu)
@@ -259,3 +259,4 @@ BEGIN
            ('PX20261102', 'HH01', 9, 4700000);
 END;
 GO
+
