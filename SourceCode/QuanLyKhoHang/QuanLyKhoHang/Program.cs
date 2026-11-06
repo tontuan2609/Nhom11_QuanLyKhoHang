@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Windows.Forms;
+using QuanLyKhoHang.Views;
+using QuanLyKhoHang.Presenters;
 
 namespace QuanLyKhoHang
 {
-    internal static class Program
+    static class Program
     {
         [STAThread]
         static void Main()
