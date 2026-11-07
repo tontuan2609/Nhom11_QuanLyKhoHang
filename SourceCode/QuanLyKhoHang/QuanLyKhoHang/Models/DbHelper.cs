@@ -1,14 +1,18 @@
-﻿using System.Data.SqlClient;
+using System.Data.SqlClient;
 
 namespace QuanLyKhoHang.Models
 {
     public static class DbHelper
     {
-        public static string ConnectionString = @"Data Source=.\SQLEXPRESS;Initial Catalog=QuanLyKhoHangDB;Integrated Security=True";
+        public static string ConnectionString
+        {
+            get { return Database.ChuoiKetNoi; }
+            set { }
+        }
 
         public static SqlConnection GetConnection()
         {
-            return new SqlConnection(ConnectionString);
+            return Database.TaoKetNoi();
         }
     }
 }

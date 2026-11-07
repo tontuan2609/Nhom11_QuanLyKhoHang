@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using QuanLyKhoHang.Models;
@@ -154,7 +154,10 @@ namespace QuanLyKhoHang.Presenters
                     {
                         cmd.Parameters.AddWithValue("@MaPhieu", _view.MaPhieu.Trim());
                         cmd.Parameters.AddWithValue("@LoaiPhieu", _view.LoaiPhieu);
-                        cmd.Parameters.AddWithValue("@MaND", "ND01");
+                        string maNguoiDung = PhienDangNhap.DaDangNhap && !string.IsNullOrEmpty(PhienDangNhap.MaNguoiDung)
+                            ? PhienDangNhap.MaNguoiDung
+                            : "ND01";
+                        cmd.Parameters.AddWithValue("@MaND", maNguoiDung);
                         cmd.Parameters.AddWithValue("@MaNCC", string.IsNullOrEmpty(_view.MaNCC) ? (object)DBNull.Value : _view.MaNCC);
                         cmd.Parameters.AddWithValue("@GhiChu", string.IsNullOrWhiteSpace(_view.GhiChu) ? (object)DBNull.Value : _view.GhiChu.Trim());
                         cmd.Parameters.AddWithValue("@TongTien", _view.TongTien);

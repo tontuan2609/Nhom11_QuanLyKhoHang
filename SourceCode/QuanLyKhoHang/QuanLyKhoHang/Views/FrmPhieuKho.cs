@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
@@ -13,10 +13,20 @@ namespace QuanLyKhoHang.Views
         private Button btnAddProduct, btnRemoveProduct, btnSavePhieu;
         private DataGridView dgvChiTiet;
         private BindingSource _bindingSource = new BindingSource();
+        private Presenters.PhieuKhoPresenter _presenter;
 
-        public FrmPhieuKho()
+        public FrmPhieuKho() : this("Nhập")
+        {
+        }
+
+        public FrmPhieuKho(string loaiPhieuMacDinh)
         {
             InitializeComponentLayout();
+            if (!string.IsNullOrEmpty(loaiPhieuMacDinh))
+            {
+                cbLoaiPhieu.SelectedItem = loaiPhieuMacDinh;
+            }
+            _presenter = new Presenters.PhieuKhoPresenter(this);
         }
 
         private void InitializeComponentLayout()

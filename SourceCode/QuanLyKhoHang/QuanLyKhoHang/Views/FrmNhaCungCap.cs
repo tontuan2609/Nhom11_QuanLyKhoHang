@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
@@ -12,10 +12,12 @@ namespace QuanLyKhoHang.Views
         private Button btnAdd, btnEdit, btnDelete, btnSave, btnCancel, btnSearch;
         private DataGridView dgvNhaCungCap;
         private BindingSource _bindingSource = new BindingSource();
+        private Presenters.NhaCungCapPresenter _presenter;
 
         public FrmNhaCungCap()
         {
             InitializeComponentLayout();
+            _presenter = new Presenters.NhaCungCapPresenter(this);
         }
 
         private void InitializeComponentLayout()
@@ -115,7 +117,7 @@ namespace QuanLyKhoHang.Views
         public event EventHandler SearchEvent;
 
         public void SetNhaCungCapListBindingSource(List<NhaCungCap> list) { _bindingSource.DataSource = list; dgvNhaCungCap.DataSource = _bindingSource; }
-        public void SetPresenter(Presenters.NhaCungCapPresenter presenter) { }
+        public void SetPresenter(Presenters.NhaCungCapPresenter presenter) { _presenter = presenter; }
         public void ShowMessage(string message, bool isError = false) => MessageBox.Show(message, isError ? "Lỗi" : "Thông báo", MessageBoxButtons.OK, isError ? MessageBoxIcon.Error : MessageBoxIcon.Information);
         public void ClearInputs() { txtMaNCC.Clear(); txtTenNCC.Clear(); txtDienThoai.Clear(); txtDiaChi.Clear(); }
         public void SetInputState(bool isEditing)

@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
+using QuanLyKhoHang.Views;
 
 namespace QuanLyKhoHang
 {
@@ -42,6 +43,23 @@ namespace QuanLyKhoHang
             form.Show();
         }
 
+        public void MoFormPhieuKho(string loaiPhieu)
+        {
+            foreach (Form con in MdiChildren)
+            {
+                if (con is FrmPhieuKho fpk)
+                {
+                    fpk.LoaiPhieu = loaiPhieu;
+                    fpk.Activate();
+                    return;
+                }
+            }
+
+            FrmPhieuKho form = new FrmPhieuKho(loaiPhieu);
+            form.MdiParent = this;
+            form.Show();
+        }
+
         private void KhoiTaoMenu()
         {
             menu = new MenuStrip();
@@ -58,22 +76,25 @@ namespace QuanLyKhoHang
             ToolStripMenuItem mnuDanhMuc = new ToolStripMenuItem("&Danh mục");
             ToolStripMenuItem mnuLoaiHang = new ToolStripMenuItem("&Loại hàng");
             ToolStripMenuItem mnuHangHoa = new ToolStripMenuItem("&Hàng hóa");
+            ToolStripMenuItem mnuNhaCungCap = new ToolStripMenuItem("&Nhà cung cấp");
             mnuLoaiHang.Click += (s, e) => MoForm<FrmLoaiHang>();
             mnuHangHoa.Click += (s, e) => MoForm<FrmHangHoa>();
+            mnuNhaCungCap.Click += (s, e) => MoForm<FrmNhaCungCap>();
             mnuDanhMuc.DropDownItems.Add(mnuLoaiHang);
             mnuDanhMuc.DropDownItems.Add(mnuHangHoa);
+            mnuDanhMuc.DropDownItems.Add(mnuNhaCungCap);
 
             ToolStripMenuItem mnuNghiepVu = new ToolStripMenuItem("&Nghiệp vụ kho");
-            ToolStripMenuItem mnuNhapKho = new ToolStripMenuItem("Nhập kho");
-            ToolStripMenuItem mnuXuatKho = new ToolStripMenuItem("Xuất kho");
-            mnuNhapKho.Click += (s, e) => ChucNangChuaCo();
-            mnuXuatKho.Click += (s, e) => ChucNangChuaCo();
+            ToolStripMenuItem mnuNhapKho = new ToolStripMenuItem("Lập phiếu &nhập kho");
+            ToolStripMenuItem mnuXuatKho = new ToolStripMenuItem("Lập phiếu &xuất kho");
+            mnuNhapKho.Click += (s, e) => MoFormPhieuKho("Nhập");
+            mnuXuatKho.Click += (s, e) => MoFormPhieuKho("Xuất");
             mnuNghiepVu.DropDownItems.Add(mnuNhapKho);
             mnuNghiepVu.DropDownItems.Add(mnuXuatKho);
 
-            mnuBaoCao = new ToolStripMenuItem("&Báo cáo");
-            ToolStripMenuItem mnuThongKe = new ToolStripMenuItem("Thống kê nhập - xuất - tồn");
-            mnuThongKe.Click += (s, e) => ChucNangChuaCo();
+            mnuBaoCao = new ToolStripMenuItem("&Báo cáo & Thống kê");
+            ToolStripMenuItem mnuThongKe = new ToolStripMenuItem("Tra cứu & Thống kê nhập - xuất - tồn");
+            mnuThongKe.Click += (s, e) => MoForm<FrmThongKeLichSu>();
             mnuBaoCao.DropDownItems.Add(mnuThongKe);
 
             ToolStripMenuItem mnuCuaSo = new ToolStripMenuItem("&Cửa sổ");
