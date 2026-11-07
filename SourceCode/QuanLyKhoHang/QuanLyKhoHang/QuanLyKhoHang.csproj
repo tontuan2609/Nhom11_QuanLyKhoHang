@@ -180,13 +180,16 @@
     <Compile Include="Models\HangHoa.cs" />
     <Compile Include="Models\NhaCungCap.cs" />
     <Compile Include="Models\PhieuKho.cs" />
+    <Compile Include="Models\ThongTinDangNhap.cs" />
     <Compile Include="PhienDangNhap.cs" />
     <Compile Include="Presenters\HangHoaPresenter.cs" />
     <Compile Include="Presenters\LoaiHangPresenter.cs" />
     <Compile Include="Models\ThongKeModels.cs" />
+    <Compile Include="Presenters\LoginPresenter.cs" />
     <Compile Include="Presenters\NhaCungCapPresenter.cs" />
     <Compile Include="Presenters\PhieuKhoPresenter.cs" />
     <Compile Include="Presenters\ThongKeLichSuPresenter.cs" />
+    <Compile Include="Repositories\TaiKhoanRepository.cs" />
     <Compile Include="Services\BieuDoGdiHelper.cs" />
     <Compile Include="Services\CsvHelperCustom.cs" />
     <Compile Include="Services\PhieuKhoPrintHelper.cs" />
@@ -210,6 +213,7 @@
     </Compile>
     <Compile Include="Views\IHangHoaView.cs" />
     <Compile Include="Views\ILoaiHangView.cs" />
+    <Compile Include="Views\ILoginView.cs" />
     <Compile Include="Views\INhaCungCapView.cs" />
     <Compile Include="Views\IPhieuKhoView.cs" />
     <Compile Include="Views\IThongKeLichSuView.cs" />

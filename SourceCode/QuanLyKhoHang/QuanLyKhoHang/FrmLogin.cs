@@ -1,11 +1,12 @@
-﻿using System;
-using System.Data;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
+using QuanLyKhoHang.Views;
+using QuanLyKhoHang.Presenters;
 
 namespace QuanLyKhoHang
 {
-    public class FrmLogin : Form
+    public class FrmLogin : Form, ILoginView
     {
         private TextBox txtTenDangNhap;
         private TextBox txtMatKhau;
@@ -13,10 +14,17 @@ namespace QuanLyKhoHang
         private Button btnDangNhap;
         private Button btnThoat;
         private ErrorProvider errorProvider;
+        private readonly LoginPresenter presenter;
+
+        public event EventHandler DangNhapClicked;
+
+        public string TenDangNhap { get { return txtTenDangNhap.Text; } }
+        public string MatKhau { get { return txtMatKhau.Text; } }
 
         public FrmLogin()
         {
             KhoiTaoGiaoDien();
+            presenter = new LoginPresenter(this);
         }
 
         private void KhoiTaoGiaoDien()
@@ -61,61 +69,15 @@ namespace QuanLyKhoHang
             AcceptButton = btnDangNhap;
             CancelButton = btnThoat;
 
-            btnDangNhap.Click += BtnDangNhap_Click;
+            btnDangNhap.Click += (s, e) => DangNhapClicked?.Invoke(this, EventArgs.Empty);
             chkHienMatKhau.CheckedChanged += (s, e) => txtMatKhau.UseSystemPasswordChar = !chkHienMatKhau.Checked;
         }
 
-        private void BtnDangNhap_Click(object sender, EventArgs e)
-        {
-            errorProvider.Clear();
-            string tenDangNhap = txtTenDangNhap.Text.Trim();
-            string matKhau = txtMatKhau.Text;
-
-            bool hopLe = true;
-            if (tenDangNhap.Length == 0)
-            {
-                errorProvider.SetError(txtTenDangNhap, "Vui lòng nhập tên đăng nhập");
-                hopLe = false;
-            }
-            if (matKhau.Length == 0)
-            {
-                errorProvider.SetError(txtMatKhau, "Vui lòng nhập mật khẩu");
-                hopLe = false;
-            }
-            if (!hopLe)
-            {
-                return;
-            }
-
-            try
-            {
-                DataTable dt = Database.GetData(
-                    "SELECT MaNguoiDung, TenDangNhap, HoTen, VaiTro FROM NguoiDung " +
-                    "WHERE TenDangNhap = @ten AND MatKhau = @mk COLLATE Latin1_General_CS_AS AND TrangThai = 1",
-                    Database.Param("@ten", tenDangNhap),
-                    Database.Param("@mk", matKhau));
-
-                if (dt.Rows.Count == 0)
-                {
-                    UiHelper.HienLoi("Sai tên đăng nhập hoặc mật khẩu, hoặc tài khoản đã bị khóa.");
-                    txtMatKhau.Clear();
-                    txtMatKhau.Focus();
-                    return;
-                }
-
-                DataRow dong = dt.Rows[0];
-                PhienDangNhap.DangNhap(
-                    Convert.ToString(dong["MaNguoiDung"]),
-                    Convert.ToString(dong["TenDangNhap"]),
-                    Convert.ToString(dong["HoTen"]),
-                    Convert.ToString(dong["VaiTro"]));
-
-                DialogResult = DialogResult.OK;
-            }
-            catch (Exception ex)
-            {
-                UiHelper.HienLoi("Không kết nối được cơ sở dữ liệu. Hãy kiểm tra SQL Server đang chạy và chuỗi kết nối trong App.config.\n\nChi tiết: " + ex.Message);
-            }
-        }
+        public void XoaLoiNhapLieu() { errorProvider.Clear(); }
+        public void BaoLoiTenDangNhap(string noiDung) { errorProvider.SetError(txtTenDangNhap, noiDung); }
+        public void BaoLoiMatKhau(string noiDung) { errorProvider.SetError(txtMatKhau, noiDung); }
+        public void HienLoi(string noiDung) { UiHelper.HienLoi(noiDung); }
+        public void XoaMatKhau() { txtMatKhau.Clear(); txtMatKhau.Focus(); }
+        public void DangNhapThanhCong() { DialogResult = DialogResult.OK; }
     }
 }
