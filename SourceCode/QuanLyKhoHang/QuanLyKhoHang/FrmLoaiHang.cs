@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
 using System.Drawing;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace QuanLyKhoHang
 {
-    public class FrmLoaiHang : Form
+    using QuanLyKhoHang.Views;
+    using QuanLyKhoHang.Presenters;
+    public class FrmLoaiHang : Form, ILoaiHangView
     {
         private TextBox txtMaLoai;
         private TextBox txtTenLoai;
@@ -20,13 +20,53 @@ namespace QuanLyKhoHang
         private DataGridView dgv;
         private ErrorProvider errorProvider;
         private bool choPhep = true;
+        private readonly LoaiHangPresenter presenter;
+
+        public event EventHandler ThemClicked;
+        public event EventHandler SuaClicked;
+        public event EventHandler XoaClicked;
+        public event EventHandler LamMoiClicked;
+        public event EventHandler TimKiemChanged;
+
+
+        public string MaLoai
+        {
+            get { return txtMaLoai.Text; }
+            set { txtMaLoai.Text = value; }
+        }
+
+        public string TenLoai
+        {
+            get { return txtTenLoai.Text; }
+            set { txtTenLoai.Text = value; }
+        }
+
+        public string MoTa
+        {
+            get { return txtMoTa.Text; }
+            set { txtMoTa.Text = value; }
+        }
+
+        public string TuKhoa
+        {
+            get { return txtTimKiem.Text; }
+        }
+
+        public bool DangChonLoaiHang
+        {
+            get { return txtMaLoai.ReadOnly; }
+        }
+
+
 
         public FrmLoaiHang()
         {
             KhoiTaoGiaoDien();
-            TaiDuLieu();
             PhanQuyen();
+
+            presenter = new LoaiHangPresenter(this);
         }
+
 
         private void KhoiTaoGiaoDien()
         {
@@ -55,17 +95,34 @@ namespace QuanLyKhoHang
             Controls.Add(dgv);
             Controls.Add(pnl);
 
-            btnThem.Click += BtnThem_Click;
-            btnSua.Click += BtnSua_Click;
-            btnXoa.Click += BtnXoa_Click;
-            btnLamMoi.Click += (s, e) => DatLaiForm();
+            btnThem.Click += (s, e) =>
+            {
+                ThemClicked?.Invoke(this, EventArgs.Empty);
+            };
+
+            btnSua.Click += (s, e) =>
+            {
+                SuaClicked?.Invoke(this, EventArgs.Empty);
+            };
+
+            btnXoa.Click += (s, e) =>
+            {
+                XoaClicked?.Invoke(this, EventArgs.Empty);
+            };
+
+            btnLamMoi.Click += (s, e) =>
+            {
+                LamMoiClicked?.Invoke(this, EventArgs.Empty);
+            };
+
             txtTimKiem.TextChanged += (s, e) =>
             {
                 if (choPhep)
                 {
-                    TaiDuLieu();
+                    TimKiemChanged?.Invoke(this, EventArgs.Empty);
                 }
             };
+
             dgv.SelectionChanged += Dgv_SelectionChanged;
             Shown += (s, e) => DatLaiForm();
         }
@@ -81,39 +138,7 @@ namespace QuanLyKhoHang
             }
         }
 
-        private void TaiDuLieu()
-        {
-            bool truoc = choPhep;
-            choPhep = false;
-            try
-            {
-                string tuKhoa = "%" + txtTimKiem.Text.Trim() + "%";
-                dgv.DataSource = Database.GetData(
-                    "SELECT l.MaLoai, l.TenLoai, l.MoTa, COUNT(h.MaHang) AS SoHangHoa " +
-                    "FROM LoaiHang l LEFT JOIN HangHoa h ON h.MaLoai = l.MaLoai " +
-                    "WHERE l.MaLoai LIKE @k OR l.TenLoai LIKE @k " +
-                    "GROUP BY l.MaLoai, l.TenLoai, l.MoTa ORDER BY l.MaLoai",
-                    Database.Param("@k", tuKhoa));
-
-                dgv.Columns["MaLoai"].HeaderText = "Mã loại";
-                dgv.Columns["TenLoai"].HeaderText = "Tên loại";
-                dgv.Columns["MoTa"].HeaderText = "Mô tả";
-                dgv.Columns["SoHangHoa"].HeaderText = "Số hàng hóa";
-
-                dgv.CurrentCell = null;
-                dgv.ClearSelection();
-            }
-            catch (Exception ex)
-            {
-                UiHelper.HienLoi("Không tải được dữ liệu: " + ex.Message);
-            }
-            finally
-            {
-                choPhep = truoc;
-            }
-        }
-
-        private void DatLaiForm()
+        public void DatLaiForm()
         {
             txtMaLoai.Clear();
             txtTenLoai.Clear();
@@ -124,7 +149,7 @@ namespace QuanLyKhoHang
             txtMaLoai.Focus();
         }
 
-        private void ChonDong(string ma)
+        public void ChonDong(string ma)
         {
             foreach (DataGridViewRow dong in dgv.Rows)
             {
@@ -152,149 +177,57 @@ namespace QuanLyKhoHang
             errorProvider.Clear();
         }
 
-        private bool KiemTra()
+        public void HienThiDanhSach(DataTable duLieu)
+        {
+            bool truoc = choPhep;
+            choPhep = false;
+
+            try
+            {
+                dgv.DataSource = duLieu;
+
+                dgv.Columns["MaLoai"].HeaderText = "Mã loại";
+                dgv.Columns["TenLoai"].HeaderText = "Tên loại";
+                dgv.Columns["MoTa"].HeaderText = "Mô tả";
+                dgv.Columns["SoHangHoa"].HeaderText = "Số hàng hóa";
+
+                dgv.CurrentCell = null;
+                dgv.ClearSelection();
+            }
+            finally
+            {
+                choPhep = truoc;
+            }
+        }
+
+        public void HienThongBao(string noiDung)
+        {
+            UiHelper.HienThongBao(noiDung);
+        }
+        public void HienLoi(string noiDung)
+        {
+            UiHelper.HienLoi(noiDung);
+        }
+
+        public bool XacNhan(string noiDung)
+        {
+            return UiHelper.XacNhan(noiDung);
+        }
+
+        public void BaoLoiMaLoai(string noiDung)
+        {
+            errorProvider.SetError(txtMaLoai, noiDung);
+        }
+
+        public void BaoLoiTenLoai(string noiDung)
+        {
+            errorProvider.SetError(txtTenLoai, noiDung);
+        }
+
+        public void XoaLoiNhapLieu()
         {
             errorProvider.Clear();
-            bool hopLe = true;
-
-            string ma = txtMaLoai.Text.Trim();
-            if (ma.Length == 0)
-            {
-                errorProvider.SetError(txtMaLoai, "Vui lòng nhập mã loại");
-                hopLe = false;
-            }
-            else if (!Regex.IsMatch(ma, "^[A-Za-z0-9_-]+$"))
-            {
-                errorProvider.SetError(txtMaLoai, "Mã chỉ gồm chữ không dấu, số, '-' hoặc '_'");
-                hopLe = false;
-            }
-
-            if (txtTenLoai.Text.Trim().Length == 0)
-            {
-                errorProvider.SetError(txtTenLoai, "Vui lòng nhập tên loại");
-                hopLe = false;
-            }
-
-            return hopLe;
         }
 
-        private object MoTaHoacNull()
-        {
-            string moTa = txtMoTa.Text.Trim();
-            return moTa.Length == 0 ? null : moTa;
-        }
-
-        private void BtnThem_Click(object sender, EventArgs e)
-        {
-            if (txtMaLoai.ReadOnly)
-            {
-                UiHelper.HienThongBao("Bấm 'Làm mới' trước khi nhập loại hàng mới.");
-                return;
-            }
-            if (!KiemTra())
-            {
-                return;
-            }
-
-            string ma = txtMaLoai.Text.Trim();
-            try
-            {
-                int daCo = Convert.ToInt32(Database.ExecuteScalar(
-                    "SELECT COUNT(*) FROM LoaiHang WHERE MaLoai = @ma",
-                    Database.Param("@ma", ma)));
-                if (daCo > 0)
-                {
-                    errorProvider.SetError(txtMaLoai, "Mã loại đã tồn tại");
-                    return;
-                }
-
-                Database.ExecuteNonQuery(
-                    "INSERT INTO LoaiHang(MaLoai, TenLoai, MoTa) VALUES (@ma, @ten, @moTa)",
-                    Database.Param("@ma", ma),
-                    Database.Param("@ten", txtTenLoai.Text.Trim()),
-                    Database.Param("@moTa", MoTaHoacNull()));
-
-                TaiDuLieu();
-                ChonDong(ma);
-                UiHelper.HienThongBao("Thêm loại hàng thành công.");
-            }
-            catch (SqlException ex)
-            {
-                UiHelper.HienLoi(UiHelper.MoTaLoiSql(ex));
-            }
-        }
-
-        private void BtnSua_Click(object sender, EventArgs e)
-        {
-            if (!txtMaLoai.ReadOnly)
-            {
-                UiHelper.HienThongBao("Chọn loại hàng cần sửa trong danh sách.");
-                return;
-            }
-            if (!KiemTra())
-            {
-                return;
-            }
-
-            string ma = txtMaLoai.Text.Trim();
-            try
-            {
-                int soDong = Database.ExecuteNonQuery(
-                    "UPDATE LoaiHang SET TenLoai = @ten, MoTa = @moTa WHERE MaLoai = @ma",
-                    Database.Param("@ten", txtTenLoai.Text.Trim()),
-                    Database.Param("@moTa", MoTaHoacNull()),
-                    Database.Param("@ma", ma));
-
-                if (soDong == 0)
-                {
-                    UiHelper.HienLoi("Không tìm thấy loại hàng cần sửa.");
-                    return;
-                }
-
-                TaiDuLieu();
-                ChonDong(ma);
-                UiHelper.HienThongBao("Cập nhật loại hàng thành công.");
-            }
-            catch (SqlException ex)
-            {
-                UiHelper.HienLoi(UiHelper.MoTaLoiSql(ex));
-            }
-        }
-
-        private void BtnXoa_Click(object sender, EventArgs e)
-        {
-            if (!txtMaLoai.ReadOnly)
-            {
-                UiHelper.HienThongBao("Chọn loại hàng cần xóa trong danh sách.");
-                return;
-            }
-
-            string ma = txtMaLoai.Text.Trim();
-            try
-            {
-                int soHang = Convert.ToInt32(Database.ExecuteScalar(
-                    "SELECT COUNT(*) FROM HangHoa WHERE MaLoai = @ma",
-                    Database.Param("@ma", ma)));
-                if (soHang > 0)
-                {
-                    UiHelper.HienLoi("Không thể xóa: loại hàng này đang có " + soHang + " hàng hóa.");
-                    return;
-                }
-
-                if (!UiHelper.XacNhan("Xóa loại hàng '" + txtTenLoai.Text.Trim() + "'?"))
-                {
-                    return;
-                }
-
-                Database.ExecuteNonQuery("DELETE FROM LoaiHang WHERE MaLoai = @ma", Database.Param("@ma", ma));
-                TaiDuLieu();
-                DatLaiForm();
-                UiHelper.HienThongBao("Đã xóa loại hàng.");
-            }
-            catch (SqlException ex)
-            {
-                UiHelper.HienLoi(UiHelper.MoTaLoiSql(ex));
-            }
-        }
     }
 }

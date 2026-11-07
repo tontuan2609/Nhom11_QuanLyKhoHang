@@ -177,10 +177,12 @@
     <Compile Include="Models\NhaCungCap.cs" />
     <Compile Include="Models\PhieuKho.cs" />
     <Compile Include="PhienDangNhap.cs" />
+    <Compile Include="Presenters\LoaiHangPresenter.cs" />
     <Compile Include="Presenters\NhaCungCapPresenter.cs" />
     <Compile Include="Presenters\PhieuKhoPresenter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Repositories\LoaiHangRepository.cs" />
     <Compile Include="UiHelper.cs" />
     <Compile Include="Views\FrmNhaCungCap.cs">
       <SubType>Form</SubType>
@@ -194,6 +196,7 @@
     <Compile Include="Views\FrmPhieuKho.Designer.cs">
       <DependentUpon>FrmPhieuKho.cs</DependentUpon>
     </Compile>
+    <Compile Include="Views\ILoaiHangView.cs" />
     <Compile Include="Views\INhaCungCapView.cs" />
     <Compile Include="Views\IPhieuKhoView.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
