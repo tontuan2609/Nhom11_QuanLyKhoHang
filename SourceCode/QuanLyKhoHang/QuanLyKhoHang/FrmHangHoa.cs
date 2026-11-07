@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
 using System.Drawing;
 using System.IO;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace QuanLyKhoHang
 {
-    public class FrmHangHoa : Form
+    public class FrmHangHoa : Form, QuanLyKhoHang.Views.IHangHoaView
     {
         private TextBox txtMaHang;
         private TextBox txtTenHang;
@@ -31,13 +29,15 @@ namespace QuanLyKhoHang
         private ErrorProvider errorProvider;
         private string duongDanAnh;
         private bool choPhep = true;
+        private readonly QuanLyKhoHang.Presenters.HangHoaPresenter presenter;
+
+        public event EventHandler ThemClicked, SuaClicked, XoaClicked, LamMoiClicked, BoAnhClicked, LocThayDoiClicked;
 
         public FrmHangHoa()
         {
             KhoiTaoGiaoDien();
-            TaiDanhSachLoai();
-            TaiDuLieu();
             PhanQuyen();
+            presenter = new QuanLyKhoHang.Presenters.HangHoaPresenter(this);
         }
 
         private void KhoiTaoGiaoDien()
@@ -98,12 +98,12 @@ namespace QuanLyKhoHang
             Controls.Add(dgv);
             Controls.Add(pnl);
 
-            btnThem.Click += BtnThem_Click;
-            btnSua.Click += BtnSua_Click;
-            btnXoa.Click += BtnXoa_Click;
-            btnLamMoi.Click += (s, e) => DatLaiForm();
+            btnThem.Click += (s, e) => ThemClicked?.Invoke(this, EventArgs.Empty);
+            btnSua.Click += (s, e) => SuaClicked?.Invoke(this, EventArgs.Empty);
+            btnXoa.Click += (s, e) => XoaClicked?.Invoke(this, EventArgs.Empty);
+            btnLamMoi.Click += (s, e) => LamMoiClicked?.Invoke(this, EventArgs.Empty);
             btnChonAnh.Click += BtnChonAnh_Click;
-            btnBoAnh.Click += (s, e) => HienAnh(null);
+            btnBoAnh.Click += (s, e) => BoAnhClicked?.Invoke(this, EventArgs.Empty);
             txtTimKiem.TextChanged += LocThayDoi;
             cboLoc.SelectedIndexChanged += LocThayDoi;
             chkSapHet.CheckedChanged += LocThayDoi;
@@ -126,61 +126,41 @@ namespace QuanLyKhoHang
 
         private void LocThayDoi(object sender, EventArgs e)
         {
-            if (choPhep)
-            {
-                TaiDuLieu();
-            }
+            if (choPhep) LocThayDoiClicked?.Invoke(this, EventArgs.Empty);
         }
 
-        private void TaiDanhSachLoai()
+        public void HienThiLoai(DataTable dtLoai)
         {
             bool truoc = choPhep;
             choPhep = false;
             try
             {
-                DataTable dtLoai = Database.GetData("SELECT MaLoai, TenLoai FROM LoaiHang ORDER BY TenLoai");
                 DataTable dtLoc = dtLoai.Copy();
                 DataRow tatCa = dtLoc.NewRow();
                 tatCa["MaLoai"] = string.Empty;
                 tatCa["TenLoai"] = "-- Tất cả --";
                 dtLoc.Rows.InsertAt(tatCa, 0);
-
                 cboLoai.DisplayMember = "TenLoai";
                 cboLoai.ValueMember = "MaLoai";
                 cboLoai.DataSource = dtLoai;
                 cboLoai.SelectedIndex = -1;
-
                 cboLoc.DisplayMember = "TenLoai";
                 cboLoc.ValueMember = "MaLoai";
                 cboLoc.DataSource = dtLoc;
                 cboLoc.SelectedIndex = 0;
             }
-            catch (Exception ex)
-            {
-                UiHelper.HienLoi("Không tải được danh sách loại hàng: " + ex.Message);
-            }
-            finally
-            {
-                choPhep = truoc;
-            }
+            finally { choPhep = truoc; }
         }
 
-        private void TaiDuLieu()
+        public void HienThiDanhSach(DataTable dt)
         {
             bool truoc = choPhep;
             choPhep = false;
             try
             {
-                string maLoaiLoc = cboLoc.SelectedValue as string ?? string.Empty;
-                DataTable dt = Database.GetDataProc(
-                    "sp_LayDanhSachHangHoa",
-                    Database.Param("@TuKhoa", txtTimKiem.Text.Trim()),
-                    Database.Param("@MaLoai", maLoaiLoc));
-
                 DataView dv = dt.DefaultView;
                 dv.RowFilter = chkSapHet.Checked ? "SoLuongTon <= MucTonToiThieu" : string.Empty;
                 dgv.DataSource = dv;
-
                 dgv.Columns["MaHang"].HeaderText = "Mã hàng";
                 dgv.Columns["TenHang"].HeaderText = "Tên hàng";
                 dgv.Columns["MaLoai"].Visible = false;
@@ -193,7 +173,6 @@ namespace QuanLyKhoHang
                 dgv.Columns["MucTonToiThieu"].HeaderText = "Tồn tối thiểu";
                 dgv.Columns["HinhAnh"].Visible = false;
                 dgv.Columns["TrangThaiTon"].HeaderText = "Trạng thái";
-
                 foreach (DataGridViewRow dong in dgv.Rows)
                 {
                     int ton = Convert.ToInt32(dong.Cells["SoLuongTon"].Value);
@@ -204,18 +183,10 @@ namespace QuanLyKhoHang
                         dong.DefaultCellStyle.ForeColor = Color.Firebrick;
                     }
                 }
-
                 dgv.CurrentCell = null;
                 dgv.ClearSelection();
             }
-            catch (Exception ex)
-            {
-                UiHelper.HienLoi("Không tải được dữ liệu: " + ex.Message);
-            }
-            finally
-            {
-                choPhep = truoc;
-            }
+            finally { choPhep = truoc; }
         }
 
         private void HienAnh(string duongDan)
@@ -259,7 +230,7 @@ namespace QuanLyKhoHang
             }
         }
 
-        private void DatLaiForm()
+        public void DatLaiForm()
         {
             txtMaHang.Clear();
             txtTenHang.Clear();
@@ -281,7 +252,7 @@ namespace QuanLyKhoHang
             return Convert.ToString(dong.Cells[cot].Value);
         }
 
-        private void ChonDong(string ma)
+        public void ChonDong(string ma)
         {
             foreach (DataGridViewRow dong in dgv.Rows)
             {
@@ -315,172 +286,26 @@ namespace QuanLyKhoHang
             errorProvider.Clear();
         }
 
-        private bool KiemTra()
-        {
-            errorProvider.Clear();
-            bool hopLe = true;
-
-            string ma = txtMaHang.Text.Trim();
-            if (ma.Length == 0)
-            {
-                errorProvider.SetError(txtMaHang, "Vui lòng nhập mã hàng");
-                hopLe = false;
-            }
-            else if (!Regex.IsMatch(ma, "^[A-Za-z0-9_-]+$"))
-            {
-                errorProvider.SetError(txtMaHang, "Mã chỉ gồm chữ không dấu, số, '-' hoặc '_'");
-                hopLe = false;
-            }
-
-            if (txtTenHang.Text.Trim().Length == 0)
-            {
-                errorProvider.SetError(txtTenHang, "Vui lòng nhập tên hàng");
-                hopLe = false;
-            }
-
-            if (cboLoai.SelectedValue == null)
-            {
-                errorProvider.SetError(cboLoai, "Vui lòng chọn loại hàng");
-                hopLe = false;
-            }
-
-            if (txtDonViTinh.Text.Trim().Length == 0)
-            {
-                errorProvider.SetError(txtDonViTinh, "Vui lòng nhập đơn vị tính");
-                hopLe = false;
-            }
-
-            if (nudDonGiaNhap.Value <= 0)
-            {
-                errorProvider.SetError(nudDonGiaNhap, "Đơn giá nhập phải lớn hơn 0");
-                hopLe = false;
-            }
-
-            return hopLe;
-        }
-
-        private void BtnThem_Click(object sender, EventArgs e)
-        {
-            if (txtMaHang.ReadOnly)
-            {
-                UiHelper.HienThongBao("Bấm 'Làm mới' trước khi nhập hàng hóa mới.");
-                return;
-            }
-            if (!KiemTra())
-            {
-                return;
-            }
-
-            string ma = txtMaHang.Text.Trim();
-            try
-            {
-                int daCo = Convert.ToInt32(Database.ExecuteScalar(
-                    "SELECT COUNT(*) FROM HangHoa WHERE MaHang = @ma",
-                    Database.Param("@ma", ma)));
-                if (daCo > 0)
-                {
-                    errorProvider.SetError(txtMaHang, "Mã hàng đã tồn tại");
-                    return;
-                }
-
-                Database.ExecuteNonQuery(
-                    "INSERT INTO HangHoa(MaHang, TenHang, MaLoai, DonViTinh, DonGiaNhap, SoLuongTon, MucTonToiThieu, HinhAnh) " +
-                    "VALUES (@ma, @ten, @loai, @dvt, @gia, @ton, @toiThieu, @anh)",
-                    Database.Param("@ma", ma),
-                    Database.Param("@ten", txtTenHang.Text.Trim()),
-                    Database.Param("@loai", cboLoai.SelectedValue),
-                    Database.Param("@dvt", txtDonViTinh.Text.Trim()),
-                    Database.Param("@gia", nudDonGiaNhap.Value),
-                    Database.Param("@ton", (int)nudTon.Value),
-                    Database.Param("@toiThieu", (int)nudTonToiThieu.Value),
-                    Database.Param("@anh", duongDanAnh));
-
-                TaiDuLieu();
-                ChonDong(ma);
-                UiHelper.HienThongBao("Thêm hàng hóa thành công.");
-            }
-            catch (SqlException ex)
-            {
-                UiHelper.HienLoi(UiHelper.MoTaLoiSql(ex));
-            }
-        }
-
-        private void BtnSua_Click(object sender, EventArgs e)
-        {
-            if (!txtMaHang.ReadOnly)
-            {
-                UiHelper.HienThongBao("Chọn hàng hóa cần sửa trong danh sách.");
-                return;
-            }
-            if (!KiemTra())
-            {
-                return;
-            }
-
-            string ma = txtMaHang.Text.Trim();
-            try
-            {
-                int soDong = Database.ExecuteNonQuery(
-                    "UPDATE HangHoa SET TenHang = @ten, MaLoai = @loai, DonViTinh = @dvt, DonGiaNhap = @gia, " +
-                    "MucTonToiThieu = @toiThieu, HinhAnh = @anh WHERE MaHang = @ma",
-                    Database.Param("@ten", txtTenHang.Text.Trim()),
-                    Database.Param("@loai", cboLoai.SelectedValue),
-                    Database.Param("@dvt", txtDonViTinh.Text.Trim()),
-                    Database.Param("@gia", nudDonGiaNhap.Value),
-                    Database.Param("@toiThieu", (int)nudTonToiThieu.Value),
-                    Database.Param("@anh", duongDanAnh),
-                    Database.Param("@ma", ma));
-
-                if (soDong == 0)
-                {
-                    UiHelper.HienLoi("Không tìm thấy hàng hóa cần sửa.");
-                    return;
-                }
-
-                TaiDuLieu();
-                ChonDong(ma);
-                UiHelper.HienThongBao("Cập nhật hàng hóa thành công.");
-            }
-            catch (SqlException ex)
-            {
-                UiHelper.HienLoi(UiHelper.MoTaLoiSql(ex));
-            }
-        }
-
-        private void BtnXoa_Click(object sender, EventArgs e)
-        {
-            if (!txtMaHang.ReadOnly)
-            {
-                UiHelper.HienThongBao("Chọn hàng hóa cần xóa trong danh sách.");
-                return;
-            }
-
-            string ma = txtMaHang.Text.Trim();
-            try
-            {
-                int soPhieu = Convert.ToInt32(Database.ExecuteScalar(
-                    "SELECT COUNT(*) FROM ChiTietPhieu WHERE MaHang = @ma",
-                    Database.Param("@ma", ma)));
-                if (soPhieu > 0)
-                {
-                    UiHelper.HienLoi("Không thể xóa: hàng hóa này đã phát sinh " + soPhieu + " dòng nhập/xuất kho.");
-                    return;
-                }
-
-                if (!UiHelper.XacNhan("Xóa hàng hóa '" + txtTenHang.Text.Trim() + "'?"))
-                {
-                    return;
-                }
-
-                Database.ExecuteNonQuery("DELETE FROM HangHoa WHERE MaHang = @ma", Database.Param("@ma", ma));
-                TaiDuLieu();
-                DatLaiForm();
-                UiHelper.HienThongBao("Đã xóa hàng hóa.");
-            }
-            catch (SqlException ex)
-            {
-                UiHelper.HienLoi(UiHelper.MoTaLoiSql(ex));
-            }
-        }
+        public string MaHang { get { return txtMaHang.Text; } }
+        public string TenHang { get { return txtTenHang.Text; } }
+        public string MaLoai { get { return cboLoai.SelectedValue as string; } }
+        public string DonViTinh { get { return txtDonViTinh.Text; } }
+        public decimal DonGiaNhap { get { return nudDonGiaNhap.Value; } }
+        public int SoLuongTon { get { return (int)nudTon.Value; } }
+        public int MucTonToiThieu { get { return (int)nudTonToiThieu.Value; } }
+        public string DuongDanAnh { get { return duongDanAnh; } }
+        public string TuKhoa { get { return txtTimKiem.Text; } }
+        public string MaLoaiLoc { get { return cboLoc.SelectedValue as string ?? string.Empty; } }
+        public bool DangChonHangHoa { get { return txtMaHang.ReadOnly; } }
+        public void BoAnh() { HienAnh(null); }
+        public void XoaLoiNhapLieu() { errorProvider.Clear(); }
+        public void BaoLoiMaHang(string s) { errorProvider.SetError(txtMaHang, s); }
+        public void BaoLoiTenHang(string s) { errorProvider.SetError(txtTenHang, s); }
+        public void BaoLoiLoai(string s) { errorProvider.SetError(cboLoai, s); }
+        public void BaoLoiDonViTinh(string s) { errorProvider.SetError(txtDonViTinh, s); }
+        public void BaoLoiDonGiaNhap(string s) { errorProvider.SetError(nudDonGiaNhap, s); }
+        public void HienThongBao(string s) { UiHelper.HienThongBao(s); }
+        public void HienLoi(string s) { UiHelper.HienLoi(s); }
+        public bool XacNhan(string s) { return UiHelper.XacNhan(s); }
     }
 }
