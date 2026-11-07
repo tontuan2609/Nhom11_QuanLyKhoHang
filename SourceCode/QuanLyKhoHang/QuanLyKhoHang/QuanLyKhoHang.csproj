@@ -162,9 +162,15 @@
     <Compile Include="Models\DbHelper.cs" />
     <Compile Include="Models\NhaCungCap.cs" />
     <Compile Include="Models\PhieuKho.cs" />
+    <Compile Include="Models\ThongKeModels.cs" />
     <Compile Include="Presenters\NhaCungCapPresenter.cs" />
     <Compile Include="Presenters\PhieuKhoPresenter.cs" />
+    <Compile Include="Presenters\ThongKeLichSuPresenter.cs" />
+    <Compile Include="Services\BieuDoGdiHelper.cs" />
+    <Compile Include="Services\CsvHelperCustom.cs" />
+    <Compile Include="Services\PhieuKhoPrintHelper.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="ProgramThanhVien3.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Views\FrmNhaCungCap.cs">
       <SubType>Form</SubType>
@@ -180,6 +186,10 @@
     </Compile>
     <Compile Include="Views\INhaCungCapView.cs" />
     <Compile Include="Views\IPhieuKhoView.cs" />
+    <Compile Include="Views\IThongKeLichSuView.cs" />
+    <Compile Include="Views\FrmThongKeLichSu.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

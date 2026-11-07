@@ -4,8 +4,11 @@ using System.Drawing;
 using System.Drawing.Printing;
 using System.Windows.Forms;
 
-namespace QuanLyKhoHang
+namespace QuanLyKhoHang.Services
 {
+    /// <summary>
+    /// Service in phiếu kho bằng PrintDocument, hỗ trợ PrintPreview và chuyển đổi số tiền thành chữ tiếng Việt
+    /// </summary>
     public class PhieuKhoPrintHelper
     {
         private readonly string maPhieu;
@@ -23,7 +26,6 @@ namespace QuanLyKhoHang
         {
             try
             {
-                // Lấy thông tin header phiếu
                 string sqlHeader = @"
                     SELECT 
                         p.MaPhieu,
@@ -49,7 +51,6 @@ namespace QuanLyKhoHang
                 }
                 thongTinPhieu = dtHeader.Rows[0];
 
-                // Lấy chi tiết phiếu
                 string sqlChiTiet = @"
                     SELECT 
                         ct.MaHang,
@@ -152,14 +153,13 @@ namespace QuanLyKhoHang
 
             int y = top;
 
-            // 1. Header Đơn vị / Doanh nghiệp
+            // Header Đơn vị / Doanh nghiệp
             g.DrawString("CÔNG TY CỔ PHẦN CÔNG NGHỆ VÀ THIẾT BỊ SỐ", fontSubHeader, brushBlack, left, y);
             y += 20;
             g.DrawString("Địa chỉ: 123 Đường Nguyễn Văn Cừ, Quận 5, TP. Hồ Chí Minh", fontRegular, brushBlack, left, y);
             y += 18;
             g.DrawString("Hotline: 028.3835.4400 - Email: khohang@nhom11.vn", fontRegular, brushBlack, left, y);
 
-            // Góc phải: Mẫu số & Mã phiếu
             string maPhieuStr = "Số phiếu: " + maPhieu;
             SizeF szMaPhieu = g.MeasureString(maPhieuStr, fontBold);
             g.DrawString(maPhieuStr, fontBold, brushBlack, right - szMaPhieu.Width, top);
@@ -171,21 +171,18 @@ namespace QuanLyKhoHang
             g.DrawLine(penDashed, left, y, right, y);
             y += 15;
 
-            // 2. Tiêu đề lớn của Phiếu
             string loaiPhieu = thongTinPhieu["LoaiPhieu"].ToString();
             string tieuDePhieu = (loaiPhieu == "Nhập") ? "PHIẾU NHẬP KHO" : "PHIẾU XUẤT KHO";
             SizeF szTieuDe = g.MeasureString(tieuDePhieu, fontHeader);
             g.DrawString(tieuDePhieu, fontHeader, brushBlack, left + (width - szTieuDe.Width) / 2, y);
             y += (int)szTieuDe.Height + 5;
 
-            // Ngày giờ lập phiếu
             DateTime ngayLap = Convert.ToDateTime(thongTinPhieu["NgayLap"]);
             string ngayLapStr = string.Format("Ngày {0:dd} tháng {0:MM} năm {0:yyyy} (Giờ lập: {0:HH:mm})", ngayLap);
             SizeF szNgay = g.MeasureString(ngayLapStr, fontItalic);
             g.DrawString(ngayLapStr, fontItalic, brushBlack, left + (width - szNgay.Width) / 2, y);
             y += (int)szNgay.Height + 15;
 
-            // 3. Thông tin người lập & đối tác
             string labelDoiTac = (loaiPhieu == "Nhập") ? "Nhà cung cấp: " : "Đơn vị nhận / Khách: ";
             g.DrawString("- Người lập phiếu: " + thongTinPhieu["NguoiLap"].ToString(), fontRegular, brushBlack, left, y);
             g.DrawString("- " + labelDoiTac + thongTinPhieu["TenNCC"].ToString(), fontRegular, brushBlack, left + width / 2, y);
@@ -198,18 +195,15 @@ namespace QuanLyKhoHang
             g.DrawString("- Diễn giải / Ghi chú: " + thongTinPhieu["GhiChu"].ToString(), fontRegular, brushBlack, left, y);
             y += 28;
 
-            // 4. Bảng chi tiết mặt hàng
             int[] colWidths = new int[] { 40, 80, 220, 60, 60, 110, 140 };
             string[] colHeaders = new string[] { "STT", "Mã hàng", "Tên hàng hóa", "ĐVT", "Số lượng", "Đơn giá (VNĐ)", "Thành tiền (VNĐ)" };
 
-            // Điều chỉnh tổng chiều rộng cột vừa khít page
             int totalColW = 0;
             for (int i = 0; i < colWidths.Length; i++) totalColW += colWidths[i];
             float tiLe = (float)width / totalColW;
             int[] cols = new int[colWidths.Length];
             for (int i = 0; i < colWidths.Length; i++) cols[i] = (int)(colWidths[i] * tiLe);
 
-            // Vẽ tiêu đề cột bảng
             int headerH = 28;
             g.FillRectangle(Brushes.LightGray, left, y, width, headerH);
             g.DrawRectangle(penBorder, left, y, width, headerH);
@@ -228,13 +222,11 @@ namespace QuanLyKhoHang
             }
             y += headerH;
 
-            // In từng dòng chi tiết
             int stt = dongHienTai + 1;
             int rowH = 24;
 
             while (dongHienTai < chiTietPhieu.Rows.Count)
             {
-                // Kiểm tra xem trang có đủ chỗ chứa dòng này + footer không
                 if (y + rowH + 160 > bottom)
                 {
                     e.HasMorePages = true;
@@ -275,7 +267,6 @@ namespace QuanLyKhoHang
                 dongHienTai++;
             }
 
-            // Dòng tổng cộng
             decimal tongTien = Convert.ToDecimal(thongTinPhieu["TongTien"]);
             g.FillRectangle(new SolidBrush(Color.FromArgb(245, 245, 245)), left, y, width, rowH);
             g.DrawRectangle(penBorder, left, y, width, rowH);
@@ -285,35 +276,27 @@ namespace QuanLyKhoHang
             g.DrawString(tongTien.ToString("#,##0") + " VNĐ", fontBold, brushBlack, new RectangleF(left + cotTruocTong, y, cols[6] - 6, rowH), new StringFormat { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center });
             y += rowH + 10;
 
-            // Số tiền bằng chữ
             string bangChu = DocTienBangChu(tongTien);
             g.DrawString("- Số tiền viết bằng chữ: " + bangChu, fontItalic, brushBlack, left, y);
             y += 30;
 
-            // 5. Khu vực chữ ký 3 bên
             int blockW = width / 3;
             StringFormat sfSign = new StringFormat { Alignment = StringAlignment.Center };
 
-            // Cột 1: Người lập phiếu
             g.DrawString("Người lập phiếu", fontBold, brushBlack, new RectangleF(left, y, blockW, 20), sfSign);
             g.DrawString("(Ký, ghi rõ họ tên)", fontItalic, brushBlack, new RectangleF(left, y + 18, blockW, 20), sfSign);
             g.DrawString(thongTinPhieu["NguoiLap"].ToString(), fontBold, brushBlack, new RectangleF(left, y + 80, blockW, 20), sfSign);
 
-            // Cột 2: Người giao / nhận hàng
             string roleSign = (loaiPhieu == "Nhập") ? "Người giao hàng" : "Người nhận hàng";
             g.DrawString(roleSign, fontBold, brushBlack, new RectangleF(left + blockW, y, blockW, 20), sfSign);
             g.DrawString("(Ký, ghi rõ họ tên)", fontItalic, brushBlack, new RectangleF(left + blockW, y + 18, blockW, 20), sfSign);
 
-            // Cột 3: Kế toán trưởng / Thủ kho
             g.DrawString("Thủ kho / Kế toán", fontBold, brushBlack, new RectangleF(left + blockW * 2, y, blockW, 20), sfSign);
             g.DrawString("(Ký, đóng dấu)", fontItalic, brushBlack, new RectangleF(left + blockW * 2, y + 18, blockW, 20), sfSign);
 
             e.HasMorePages = false;
         }
 
-        /// <summary>
-        /// Hàm chuyển đổi số tiền thành chữ tiếng Việt chuẩn xác.
-        /// </summary>
         public static string DocTienBangChu(decimal soTien)
         {
             if (soTien == 0) return "Không đồng.";
@@ -373,7 +356,7 @@ namespace QuanLyKhoHang
                 if (donVi == 5) s += "lăm";
                 else if (donVi > 0) s += chuSo[donVi];
             }
-            else // chuc == 0
+            else
             {
                 if ((tram > 0 || coHangTruoc) && donVi > 0)
                 {
@@ -389,4 +372,3 @@ namespace QuanLyKhoHang
         }
     }
 }
-

@@ -7,14 +7,18 @@ using System.Drawing.Imaging;
 using System.Drawing.Text;
 using System.Windows.Forms;
 
-namespace QuanLyKhoHang
+namespace QuanLyKhoHang.Services
 {
+    /// <summary>
+    /// Service vẽ biểu đồ nhập - xuất - tồn bằng GDI+ (System.Drawing)
+    /// Hỗ trợ cả Biểu đồ Cột nhóm Gradient và Biểu đồ Đường xu hướng
+    /// </summary>
     public class BieuDoGdiHelper
     {
         public enum LoaiBieuDo
         {
-            CotNhom,  // Grouped Column Chart
-            Duong     // Line Chart
+            CotNhom,
+            Duong
         }
 
         public class ItemThongKe
@@ -56,47 +60,41 @@ namespace QuanLyKhoHang
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
 
-            // Nền trắng
             g.FillRectangle(Brushes.White, bounds);
 
-            // Font chữ
             Font fontTieuDe = new Font("Segoe UI", 12, FontStyle.Bold);
             Font fontLegend = new Font("Segoe UI", 9, FontStyle.Bold);
             Font fontNhan = new Font("Segoe UI", 8, FontStyle.Regular);
             Font fontSo = new Font("Segoe UI", 8, FontStyle.Bold);
 
-            // 1. Tiêu đề biểu đồ
+            // Tiêu đề
             SizeF szTieuDe = g.MeasureString(tieuDe, fontTieuDe);
             g.DrawString(tieuDe, fontTieuDe, new SolidBrush(Color.FromArgb(30, 41, 59)),
                 bounds.Left + (bounds.Width - szTieuDe.Width) / 2, bounds.Top + 10);
 
-            // 2. Chú giải (Legend)
+            // Chú giải
             int legendY = bounds.Top + 38;
             int boxSize = 14;
-            Color colNhap = Color.FromArgb(37, 99, 235);   // Xanh dương
-            Color colXuat = Color.FromArgb(220, 38, 38);   // Đỏ
-            Color colTon = Color.FromArgb(22, 163, 74);    // Xanh lá
+            Color colNhap = Color.FromArgb(37, 99, 235);
+            Color colXuat = Color.FromArgb(220, 38, 38);
+            Color colTon = Color.FromArgb(22, 163, 74);
 
             int legendX = bounds.Left + (bounds.Width - 360) / 2;
 
-            // Legend Nhập
             g.FillRectangle(new SolidBrush(colNhap), legendX, legendY, boxSize, boxSize);
             g.DrawRectangle(Pens.DarkBlue, legendX, legendY, boxSize, boxSize);
             g.DrawString("Tổng nhập", fontLegend, Brushes.Black, legendX + boxSize + 6, legendY);
 
-            // Legend Xuất
             legendX += 120;
             g.FillRectangle(new SolidBrush(colXuat), legendX, legendY, boxSize, boxSize);
             g.DrawRectangle(Pens.DarkRed, legendX, legendY, boxSize, boxSize);
             g.DrawString("Tổng xuất", fontLegend, Brushes.Black, legendX + boxSize + 6, legendY);
 
-            // Legend Tồn
             legendX += 120;
             g.FillRectangle(new SolidBrush(colTon), legendX, legendY, boxSize, boxSize);
             g.DrawRectangle(Pens.DarkGreen, legendX, legendY, boxSize, boxSize);
             g.DrawString("Tồn hiện tại", fontLegend, Brushes.Black, legendX + boxSize + 6, legendY);
 
-            // Nếu không có dữ liệu
             if (duLieu == null || duLieu.Count == 0)
             {
                 string msgKhongDuLieu = "Không có dữ liệu phát sinh trong khoảng thời gian này.";
@@ -106,7 +104,6 @@ namespace QuanLyKhoHang
                 return;
             }
 
-            // 3. Vùng vẽ đồ thị (Plot Area)
             int padLeft = 65;
             int padRight = 30;
             int padTop = 75;
@@ -121,7 +118,6 @@ namespace QuanLyKhoHang
 
             if (plotArea.Width <= 10 || plotArea.Height <= 10) return;
 
-            // Tìm giá trị lớn nhất để chia tỉ lệ trục Y
             int maxVal = 10;
             foreach (var item in duLieu)
             {
@@ -130,12 +126,10 @@ namespace QuanLyKhoHang
                 if (item.TonHienTai > maxVal) maxVal = item.TonHienTai;
             }
 
-            // Làm tròn maxVal lên mốc đẹp (bội số của 5 hoặc 10)
             int step = TinhStepPhuHop(maxVal, 5);
             int yMax = step * 5;
             if (yMax < maxVal) yMax += step;
 
-            // Vẽ lưới trục Y & nhãn vạch
             Pen penGrid = new Pen(Color.FromArgb(226, 232, 240), 1) { DashStyle = DashStyle.Dash };
             Pen penAxis = new Pen(Color.FromArgb(100, 116, 139), 1.5f);
             Brush brushText = new SolidBrush(Color.FromArgb(71, 85, 105));
@@ -146,23 +140,18 @@ namespace QuanLyKhoHang
                 int val = i * (yMax / soVach);
                 float yPos = plotArea.Bottom - (float)val / yMax * plotArea.Height;
 
-                // Đường lưới ngang
                 if (i > 0)
                 {
                     g.DrawLine(penGrid, plotArea.Left, yPos, plotArea.Right, yPos);
                 }
 
-                // Nhãn số trục Y
                 string labelVal = val.ToString("N0");
                 SizeF szLabel = g.MeasureString(labelVal, fontNhan);
                 g.DrawString(labelVal, fontNhan, brushText, plotArea.Left - szLabel.Width - 6, yPos - szLabel.Height / 2);
             }
 
-            // Trục tọa độ chính
             g.DrawLine(penAxis, plotArea.Left, plotArea.Top, plotArea.Left, plotArea.Bottom);
             g.DrawLine(penAxis, plotArea.Left, plotArea.Bottom, plotArea.Right, plotArea.Bottom);
-
-            // Đơn vị tính trục Y
             g.DrawString("(Số lượng)", fontNhan, brushText, plotArea.Left - 50, plotArea.Top - 18);
 
             int n = duLieu.Count;
@@ -170,7 +159,6 @@ namespace QuanLyKhoHang
 
             if (loai == LoaiBieuDo.CotNhom)
             {
-                // VẼ BIỂU ĐỒ CỘT NHÓM
                 float barWidth = Math.Max(6, Math.Min(26, (slotWidth - 20) / 3));
 
                 for (int i = 0; i < n; i++)
@@ -178,44 +166,37 @@ namespace QuanLyKhoHang
                     var it = duLieu[i];
                     float centerX = plotArea.Left + i * slotWidth + slotWidth / 2;
 
-                    // Tọa độ X cho 3 cột
                     float xNhap = centerX - barWidth * 1.5f;
                     float xXuat = centerX - barWidth * 0.5f;
                     float xTon = centerX + barWidth * 0.5f;
 
-                    // Chiều cao cột
                     float hNhap = (float)it.TongNhap / yMax * plotArea.Height;
                     float hXuat = (float)it.TongXuat / yMax * plotArea.Height;
                     float hTon = (float)it.TonHienTai / yMax * plotArea.Height;
 
-                    // Vẽ cột Nhập
                     VeCotGradient(g, xNhap, plotArea.Bottom - hNhap, barWidth, hNhap, colNhap, Color.FromArgb(147, 197, 253));
                     if (it.TongNhap > 0)
                     {
                         VeGiaTriTrenCot(g, it.TongNhap.ToString(), fontSo, Brushes.DarkBlue, xNhap + barWidth / 2, plotArea.Bottom - hNhap);
                     }
 
-                    // Vẽ cột Xuất
                     VeCotGradient(g, xXuat, plotArea.Bottom - hXuat, barWidth, hXuat, colXuat, Color.FromArgb(252, 165, 165));
                     if (it.TongXuat > 0)
                     {
                         VeGiaTriTrenCot(g, it.TongXuat.ToString(), fontSo, Brushes.DarkRed, xXuat + barWidth / 2, plotArea.Bottom - hXuat);
                     }
 
-                    // Vẽ cột Tồn
                     VeCotGradient(g, xTon, plotArea.Bottom - hTon, barWidth, hTon, colTon, Color.FromArgb(134, 239, 172));
                     if (it.TonHienTai > 0)
                     {
                         VeGiaTriTrenCot(g, it.TonHienTai.ToString(), fontSo, Brushes.DarkGreen, xTon + barWidth / 2, plotArea.Bottom - hTon);
                     }
 
-                    // Nhãn trục X (Tên hàng hoặc Mã hàng)
                     VeNhanTrucX(g, it.TenHang, it.MaHang, fontNhan, brushText, centerX, plotArea.Bottom + 6, slotWidth - 6);
                 }
             }
             else
             {
-                // VẼ BIỂU ĐỒ ĐƯỜNG (LINE CHART)
                 PointF[] ptsNhap = new PointF[n];
                 PointF[] ptsXuat = new PointF[n];
                 PointF[] ptsTon = new PointF[n];
@@ -242,7 +223,6 @@ namespace QuanLyKhoHang
                         g.DrawLines(penLineTon, ptsTon);
                     }
 
-                    // Vẽ các điểm mốc tròn (Dots)
                     int dotR = 4;
                     for (int i = 0; i < n; i++)
                     {
@@ -284,7 +264,6 @@ namespace QuanLyKhoHang
 
         private static void VeNhanTrucX(Graphics g, string tenHang, string maHang, Font f, Brush b, float centerX, float topY, float maxWidth)
         {
-            // Cắt gọn tên hàng nếu quá dài
             string hienThi = tenHang;
             if (hienThi.Length > 16)
             {
@@ -316,9 +295,6 @@ namespace QuanLyKhoHang
             return (int)Math.Max(1, clean * pow10);
         }
 
-        /// <summary>
-        /// Xuất hình ảnh biểu đồ ra file ảnh (PNG/JPG).
-        /// </summary>
         public static bool LuuAnhBieuDo(List<ItemThongKe> duLieu, LoaiBieuDo loai, IWin32Window parent = null)
         {
             using (SaveFileDialog sfd = new SaveFileDialog())
@@ -356,4 +332,3 @@ namespace QuanLyKhoHang
         }
     }
 }
-
