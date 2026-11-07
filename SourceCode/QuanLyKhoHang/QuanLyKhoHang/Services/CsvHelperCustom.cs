@@ -5,13 +5,14 @@ using System.IO;
 using System.Text;
 using System.Windows.Forms;
 
-namespace QuanLyKhoHang
+namespace QuanLyKhoHang.Services
 {
+    /// <summary>
+    /// Service xử lý xuất file CSV chuẩn UTF-8 có BOM
+    /// Mở trực tiếp bằng Microsoft Excel không bao giờ bị lỗi font tiếng Việt có dấu
+    /// </summary>
     public static class CsvHelperCustom
     {
-        /// <summary>
-        /// Xuất dữ liệu từ DataTable ra file CSV chuẩn UTF-8 có BOM (mở trực tiếp bằng Excel không lỗi font tiếng Việt).
-        /// </summary>
         public static bool XuatDataTableRaCsv(DataTable dt, string tieuDeMacDinh, IWin32Window parent = null)
         {
             if (dt == null || dt.Rows.Count == 0)
@@ -36,7 +37,7 @@ namespace QuanLyKhoHang
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    // 1. Dòng tiêu đề cột
+                    // Tiêu đề cột
                     for (int i = 0; i < dt.Columns.Count; i++)
                     {
                         sb.Append(ChuanHoaO(dt.Columns[i].ColumnName));
@@ -47,7 +48,7 @@ namespace QuanLyKhoHang
                     }
                     sb.AppendLine();
 
-                    // 2. Dòng dữ liệu
+                    // Dòng dữ liệu
                     foreach (DataRow row in dt.Rows)
                     {
                         for (int i = 0; i < dt.Columns.Count; i++)
@@ -80,7 +81,6 @@ namespace QuanLyKhoHang
                         sb.AppendLine();
                     }
 
-                    // Ghi ra file với UTF-8 kèm BOM
                     File.WriteAllText(sfd.FileName, sb.ToString(), new UTF8Encoding(true));
 
                     DialogResult dr = MessageBox.Show(
@@ -104,9 +104,6 @@ namespace QuanLyKhoHang
             }
         }
 
-        /// <summary>
-        /// Xuất dữ liệu từ DataGridView ra file CSV chuẩn UTF-8 có BOM.
-        /// </summary>
         public static bool XuatDataGridViewRaCsv(DataGridView dgv, string tieuDeMacDinh, IWin32Window parent = null)
         {
             if (dgv == null || dgv.Rows.Count == 0)
@@ -131,7 +128,6 @@ namespace QuanLyKhoHang
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    // Tiêu đề cột
                     bool daGhiCotDau = false;
                     foreach (DataGridViewColumn col in dgv.Columns)
                     {
@@ -142,7 +138,6 @@ namespace QuanLyKhoHang
                     }
                     sb.AppendLine();
 
-                    // Dòng dữ liệu
                     foreach (DataGridViewRow row in dgv.Rows)
                     {
                         if (row.IsNewRow) continue;
@@ -188,7 +183,6 @@ namespace QuanLyKhoHang
                 return "\"\"";
             }
 
-            // Nếu ô có chứa dấu phẩy, nháy kép hoặc xuống dòng thì cần bao bọc trong nháy kép và nhân đôi dấu nháy
             if (giaTri.Contains(",") || giaTri.Contains("\"") || giaTri.Contains("\n") || giaTri.Contains("\r"))
             {
                 return "\"" + giaTri.Replace("\"", "\"\"") + "\"";
@@ -198,4 +192,3 @@ namespace QuanLyKhoHang
         }
     }
 }
-
