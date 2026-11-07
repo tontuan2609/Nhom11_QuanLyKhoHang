@@ -12,13 +12,15 @@ echo =========================================================================
 echo.
 echo Đang biên dịch mã nguồn theo kiến trúc MVP (Models - Views - Presenters - Services)...
 
-set CSC_PATH=%SystemRoot%\Microsoft.NET\Framework64\v4.0.30319\csc.exe
+set "PROJECT_ROOT=%~dp0"
+set "SOURCE_ROOT=%PROJECT_ROOT%QuanLyKhoHang"
+set "CSC_PATH=%SystemRoot%\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 
-"%CSC_PATH%" /nologo /target:winexe /out:"QuanLyKhoHang\Test_ThanhVien3.exe" /main:QuanLyKhoHang.ProgramThanhVien3 /r:System.dll,System.Core.dll,System.Data.dll,System.Drawing.dll,System.Windows.Forms.dll,System.Xml.dll,System.Configuration.dll "QuanLyKhoHang\Database.cs" "QuanLyKhoHang\Models\ThongKeModels.cs" "QuanLyKhoHang\Services\BieuDoGdiHelper.cs" "QuanLyKhoHang\Services\CsvHelperCustom.cs" "QuanLyKhoHang\Services\PhieuKhoPrintHelper.cs" "QuanLyKhoHang\Views\IThongKeLichSuView.cs" "QuanLyKhoHang\Views\FrmThongKeLichSu.cs" "QuanLyKhoHang\Presenters\ThongKeLichSuPresenter.cs" "QuanLyKhoHang\ProgramThanhVien3.cs"
+"%CSC_PATH%" /nologo /target:winexe /out:"%PROJECT_ROOT%Test_ThanhVien3.exe" /main:QuanLyKhoHang.ProgramThanhVien3 /r:System.dll,System.Core.dll,System.Data.dll,System.Drawing.dll,System.Windows.Forms.dll,System.Xml.dll,System.Configuration.dll "%SOURCE_ROOT%\Database.cs" "%SOURCE_ROOT%\Models\ThongKeModels.cs" "%SOURCE_ROOT%\Services\BieuDoGdiHelper.cs" "%SOURCE_ROOT%\Services\CsvHelperCustom.cs" "%SOURCE_ROOT%\Services\PhieuKhoPrintHelper.cs" "%SOURCE_ROOT%\Views\IThongKeLichSuView.cs" "%SOURCE_ROOT%\Views\FrmThongKeLichSu.cs" "%SOURCE_ROOT%\Presenters\ThongKeLichSuPresenter.cs" "%SOURCE_ROOT%\ProgramThanhVien3.cs"
 
 if %ERRORLEVEL% EQU 0 (
     echo Biên dịch thành công! Đang khởi chạy ứng dụng...
-    start "" "QuanLyKhoHang\Test_ThanhVien3.exe"
+    start "" "%PROJECT_ROOT%Test_ThanhVien3.exe"
 ) else (
     echo [LỖI] Không thể biên dịch! Vui lòng kiểm tra lại.
     pause

@@ -1,0 +1,288 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{vietnamese}
+\setmainfont{Arial}
+\usepackage[a4paper,margin=2.3cm]{geometry}
+\usepackage{setspace}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\onehalfspacing
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Quản lý kho hàng -- Nhóm 11}
+\fancyhead[R]{Báo cáo đồ án}
+\fancyfoot[C]{\thepage}
+\lstset{basicstyle=\ttfamily\footnotesize,breaklines=true,frame=single,numbers=left,numberstyle=\tiny,showstringspaces=false,backgroundcolor=\color{gray!6}}
+\newcommand{\code}[1]{\texttt{#1}}
+\begin{document}
+\begin{titlepage}
+\centering
+{\Large TRƯỜNG ĐẠI HỌC SƯ PHẠM TP. HỒ CHÍ MINH\par}
+\vspace{0.4cm}{\large KHOA CÔNG NGHỆ THÔNG TIN\par}\vfill
+{\Huge\bfseries BÁO CÁO ĐỒ ÁN CUỐI KỲ\par}
+\vspace{0.5cm}{\LARGE\bfseries HỆ THỐNG QUẢN LÝ KHO HÀNG\par}
+\vspace{0.4cm}{\Large Môn: Lập trình trên Windows\par}\vfill
+\begin{tabular}{ll}
+Giảng viên: & ThS. Lê Thanh Thoại\\
+Nhóm: & Nhóm 11\\
+Năm học: & 2026
+\end{tabular}\vfill
+TP. Hồ Chí Minh, tháng 11 năm 2026
+\end{titlepage}
+\pagenumbering{roman}
+\chapter*{Lời cam đoan}
+Nhóm cam đoan báo cáo mô tả đúng sản phẩm học tập đã xây dựng, bao gồm mã nguồn,
+cơ sở dữ liệu, dữ liệu mẫu, test case và hướng dẫn bàn giao.
+\chapter*{Lời cảm ơn}
+Nhóm cảm ơn giảng viên đã hướng dẫn WinForms, ADO.NET, SQL Server, MVP, kiểm thử
+và triển khai ứng dụng Windows.
+\chapter*{Tóm tắt}
+Đề tài xây dựng ứng dụng desktop quản lý hàng hóa, loại hàng, nhà cung cấp,
+phiếu nhập/xuất, tồn kho, lịch sử, CSV, biểu đồ GDI+ và in phiếu. Ứng dụng dùng
+MVP kết hợp Repository/Service, SQL Server và transaction.
+\tableofcontents
+\listoftables
+\clearpage\pagenumbering{arabic}
+
+\chapter{Giới thiệu đề tài}
+\section{Bối cảnh và nhu cầu}
+Kho hàng có nhiều biến động mỗi ngày. Ghi chép thủ công gây sai lệch số lượng,
+khó truy vết và chậm lập báo cáo. Hệ thống này tập trung dữ liệu và cung cấp
+luồng thao tác thống nhất cho quản lý và nhân viên kho.
+\section{Mục tiêu}
+\begin{enumerate}
+\item Quản lý tập trung hàng hóa, loại hàng và nhà cung cấp.
+\item Lưu phiếu nhập/xuất đồng bộ với chi tiết và tồn kho.
+\item Cung cấp báo cáo tồn, lịch sử, biểu đồ, CSV và bản in.
+\item Bàn giao được source, database, test case, báo cáo và bản Release.
+\end{enumerate}
+\section{Phạm vi và đối tượng}
+Phạm vi gồm một kho nội bộ, hai vai trò người dùng và các nghiệp vụ cốt lõi.
+Chưa bao gồm đa kho, mã vạch, hóa đơn điện tử và bán hàng trực tuyến.
+
+\chapter{Phân tích yêu cầu}
+\section{Yêu cầu chức năng}
+\begin{longtable}{p{0.12\textwidth}p{0.27\textwidth}p{0.48\textwidth}}
+\toprule Mã & Nhóm & Mô tả\\\midrule
+FR01 & Đăng nhập & Xác thực tài khoản đang hoạt động.\\
+FR02 & Phân quyền & Phân biệt Quản lý và Nhân viên kho.\\
+FR03 & Loại hàng & Thêm, sửa, xóa, tìm kiếm, kiểm tra ràng buộc.\\
+FR04 & Hàng hóa & Quản lý giá, tồn, mức tồn tối thiểu và loại hàng.\\
+FR05 & Nhà cung cấp & Quản lý thông tin và tìm kiếm nhà cung cấp.\\
+FR06 & Phiếu nhập & Tăng tồn cùng header và chi tiết bằng transaction.\\
+FR07 & Phiếu xuất & Kiểm tra đủ tồn trước khi giảm kho.\\
+FR08 & Tồn kho & Lọc trạng thái và tính giá trị tồn qua stored procedure.\\
+FR09 & Lịch sử & Lọc ngày, loại phiếu, từ khóa và xem chi tiết.\\
+FR10 & CSV & Xuất dữ liệu với UTF-8 BOM.\\
+FR11 & Biểu đồ & Vẽ cột nhóm hoặc đường cho nhập, xuất, tồn.\\
+FR12 & In ấn & PrintPreview và PrintDocument cho phiếu kho.\\
+\bottomrule
+\end{longtable}
+\section{Yêu cầu phi chức năng}
+Giao diện phải dễ dùng; lỗi phải hiển thị rõ; truy vấn dùng tham số; dữ liệu được
+bảo vệ bằng khóa ngoại, CHECK và transaction; mã nguồn phải phân lớp; chương trình
+không phụ thuộc đường dẫn cá nhân.
+\section{Người dùng}
+Quản lý sử dụng đầy đủ danh mục, nghiệp vụ và báo cáo. Nhân viên kho thực hiện
+nhập/xuất và các thao tác được cấp quyền. Tài khoản mẫu là \code{admin/123456}
+và \code{nvkho/123456}.
+
+\chapter{Kiến trúc MVP}
+\section{Nguyên tắc}
+View chỉ phụ trách hiển thị và nhận thao tác; Presenter điều phối; Model mô tả
+dữ liệu; Repository truy vấn; Service xử lý CSV, biểu đồ và in. Form giao tiếp
+với Presenter qua các interface View.
+\section{Cấu trúc thư mục}
+\begin{verbatim}
+Models/ Views/ Presenters/ Repositories/ Services/
+Database.cs  PhienDangNhap.cs  FrmLogin.cs  FrmMain.cs
+\end{verbatim}
+\section{Phân công}
+\begin{longtable}{p{0.2\textwidth}p{0.68\textwidth}}
+\toprule Thành viên & Phạm vi\\\midrule
+Thành viên 1 & CSDL, Database.cs, đăng nhập, phân quyền, FrmMain, hàng hóa, loại hàng.\\
+Thành viên 2 & Nhà cung cấp, phiếu nhập/xuất, SqlTransaction.\\
+Thành viên 3 & Tồn kho, lịch sử, CSV, GDI+ và PrintDocument.\\
+\bottomrule
+\end{longtable}
+\section{Luồng xử lý}
+Form phát sự kiện; Presenter đọc interface; Repository hoặc Service xử lý;
+Presenter yêu cầu View cập nhật. Cách tách này giúp kiểm thử logic mà không
+phụ thuộc trực tiếp vào control.
+
+\chapter{Thiết kế cơ sở dữ liệu}
+\section{Các bảng}
+\begin{longtable}{p{0.25\textwidth}p{0.25\textwidth}p{0.38\textwidth}}
+\toprule Bảng & Khóa & Ý nghĩa\\\midrule
+NguoiDung & MaNguoiDung & Tài khoản, họ tên, vai trò, trạng thái.\\
+LoaiHang & MaLoai & Danh mục loại hàng.\\
+NhaCungCap & MaNCC & Thông tin nhà cung cấp.\\
+HangHoa & MaHang, MaLoai & Hàng hóa và tồn hiện tại.\\
+PhieuKho & MaPhieu & Header nhập/xuất.\\
+ChiTietPhieu & MaPhieu, MaHang & Dòng chi tiết, số lượng, đơn giá.\\
+\bottomrule
+\end{longtable}
+\section{Quan hệ}
+NguoiDung có nhiều PhieuKho; NhaCungCap có nhiều PhieuKho; PhieuKho có nhiều
+ChiTietPhieu; HangHoa có nhiều ChiTietPhieu; LoaiHang có nhiều HangHoa.
+\section{Ràng buộc}
+Khóa chính chống trùng; khóa ngoại bảo vệ liên kết; CHECK giới hạn vai trò,
+loại phiếu, số lượng và đơn giá. Khi xóa loại hàng còn hàng, Presenter từ chối.
+\section{Stored procedure}
+Hệ thống có các thủ tục lấy danh sách hàng, thống kê nhập xuất tồn, tính tồn kho
+chi tiết, tra cứu lịch sử, lấy chi tiết phiếu và lấy header in phiếu.
+
+\chapter{Thiết kế giao diện}
+\section{Đăng nhập}
+Form có tên đăng nhập, mật khẩu, hiện mật khẩu, đăng nhập và thoát. ErrorProvider
+hiển thị trường rỗng; lỗi kết nối nêu rõ cần kiểm tra SQL Server/App.config.
+\section{Màn hình chính}
+FrmMain là MDI container, có menu hệ thống, danh mục, nghiệp vụ kho, báo cáo và
+cửa sổ. StatusStrip hiển thị người dùng, vai trò và thời gian.
+\section{Danh mục và phiếu}
+Các Form CRUD có vùng nhập, nút thao tác, tìm kiếm và DataGridView. Form phiếu
+cho phép thêm nhiều dòng, tính tổng tiền, kiểm tra tồn khi xuất và lưu transaction.
+\section{Báo cáo}
+FrmThongKeLichSu có tab lịch sử/in phiếu, tồn kho/cảnh báo và biểu đồ. Các chức
+năng CSV, PrintPreview, lưu ảnh và lọc dữ liệu được đặt trong Presenter/Service.
+
+\chapter{Cài đặt và triển khai}
+\section{Môi trường}
+Visual Studio 2022 trở lên, .NET Framework 4.7.2, C\# 7.3 và SQL Server 2019
+hoặc SQL Server Express.
+\section{Cài database}
+Chạy \code{Scripts/QuanLyKhoHangDB.sql} một lần trong SSMS. Với SQLCMD dùng
+\code{-f 65001} vì script chứa tiếng Việt UTF-8. Backup trong Database là phương
+án thay thế, không chạy đồng thời với script.
+\section{Build}
+Mở \code{QuanLyKhoHang.slnx}, chọn Release, Build Solution. File chạy nằm trong
+\code{SourceCode/QuanLyKhoHang/QuanLyKhoHang/bin/Release/}.
+\section{Đóng gói}
+Gói nộp gồm SourceCode, Database, Report, TestCases và README. Connection string
+nằm trong App.config để thay instance SQL Server trên máy người chấm.
+
+\chapter{Mô tả chức năng}
+\section{Đăng nhập và phân quyền}
+LoginPresenter kiểm tra đầu vào, gọi TaiKhoanRepository và tạo PhienDangNhap.
+FrmMain kiểm soát menu báo cáo theo vai trò.
+\section{Hàng hóa và loại hàng}
+Presenter kiểm tra rỗng, trùng mã, dữ liệu số và gọi Repository. Lưới được nạp
+lại sau mỗi thao tác. Tồn thấp được nhận diện theo mức tối thiểu.
+\section{Nhà cung cấp}
+Presenter điều phối chế độ thêm/sửa, tìm kiếm, lưu và xóa; dữ liệu được truy vấn
+bằng tham số.
+\section{Phiếu nhập/xuất}
+Phiếu gồm header và nhiều chi tiết. Với xuất kho, Presenter kiểm tra tồn trước
+khi lưu và kiểm tra lại trong transaction để tránh biến động đồng thời.
+\section{Tồn kho và lịch sử}
+Tồn kho gồm giá trị tồn, tổng nhập, tổng xuất và trạng thái. Lịch sử dùng khoảng
+ngày nửa mở để bao phủ toàn bộ ngày kết thúc.
+\section{CSV, biểu đồ và in}
+CSV dùng UTF-8 BOM và escape dữ liệu. GDI+ vẽ cột nhóm/đường có chú giải.
+PrintDocument lấy header và chi tiết từ stored procedure để xem trước/in.
+
+\chapter{Kiểm thử}
+\section{Chiến lược}
+Kiểm thử gồm giao diện, CRUD, nghiệp vụ, CSDL và bàn giao. Mỗi test case có ID,
+điều kiện, dữ liệu, thao tác, kết quả mong đợi, thực tế và trạng thái.
+\section{Ma trận test case}
+\begin{longtable}{p{0.08\textwidth}p{0.2\textwidth}p{0.38\textwidth}p{0.24\textwidth}}
+\toprule ID & Chức năng & Dữ liệu/thao tác & Kết quả mong đợi\\\midrule
+TC01 & Đăng nhập & admin/123456 & Mở màn hình chính.\\
+TC02 & Đăng nhập sai & Mật khẩu sai & Báo lỗi.\\
+TC03 & Phân quyền & nvkho mở báo cáo & Giới hạn đúng vai trò.\\
+TC04 & Thêm hàng & Mã mới hợp lệ & Lưu và cập nhật lưới.\\
+TC05 & Trùng mã & Dùng HH01 lần hai & Từ chối và báo lỗi.\\
+TC06 & Xóa loại & Xóa LH01 còn hàng & Từ chối do ràng buộc.\\
+TC07 & Nhập kho & Lưu phiếu có chi tiết & Tăng tồn đồng bộ.\\
+TC08 & Xuất vượt tồn & Xuất quá HH02 & Không lưu.\\
+TC09 & Rollback & Gây lỗi trong transaction & Dữ liệu không đổi.\\
+TC10 & Lọc lịch sử & 01/10--20/10/2026 & Đúng khoảng ngày.\\
+TC11 & Tồn kho & Lọc cảnh báo/hết hàng & Đúng trạng thái.\\
+TC12 & CSV & Xuất DataGridView & Excel đọc đúng tiếng Việt.\\
+TC13 & Biểu đồ & Chọn cột/đường & Vẽ đủ số liệu.\\
+TC14 & In phiếu & PrintPreview & Đúng header/chi tiết.\\
+\bottomrule
+\end{longtable}
+\section{Kết quả môi trường}
+Database thực tế có 2 tài khoản, 5 mặt hàng và 5 phiếu mẫu. Đăng nhập hai vai trò,
+các stored procedure tồn kho, lịch sử, thống kê và chi tiết phiếu đã được thực thi.
+Bản Release build thành công và khởi động được.
+
+\chapter{Đánh giá và hướng phát triển}
+\section{Đáp ứng rubric}
+Chức năng bao phủ nghiệp vụ kho; mã nguồn có MVP, Repository và Service; database
+có script, backup và dữ liệu; báo cáo có mô tả yêu cầu, kiến trúc, kiểm thử và
+phụ lục. Nhóm cần chụp ảnh giao diện và điền kết quả thực tế trước khi nộp.
+\section{Hạn chế}
+Mật khẩu mẫu đang lưu dạng văn bản; chưa có audit log, đa kho, barcode, backup
+tự động và bộ test tự động.
+\section{Hướng phát triển}
+Băm mật khẩu, logging, nhiều kho, barcode, xuất Excel, phân trang, cấu hình
+server bằng giao diện, CI build và kiểm thử tích hợp.
+
+\chapter{Kịch bản demo 7 phút}
+\begin{enumerate}
+\item Giới thiệu bài toán và người dùng.
+\item Đăng nhập tài khoản demo.
+\item Demo thêm/sửa/xóa/tìm kiếm.
+\item Demo phiếu nhập và phiếu xuất.
+\item Demo tồn kho, lịch sử, biểu đồ, CSV hoặc in.
+\item Chỉ ra database và kiến trúc MVP.
+\item Nêu hạn chế và hướng phát triển.
+\end{enumerate}
+
+\appendix
+\chapter{Phụ lục mã nguồn}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Database.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/FrmMain.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/FrmLogin.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/FrmHangHoa.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/FrmLoaiHang.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/PhienDangNhap.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Presenters/HangHoaPresenter.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Presenters/LoaiHangPresenter.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Presenters/LoginPresenter.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Presenters/NhaCungCapPresenter.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Presenters/PhieuKhoPresenter.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Presenters/ThongKeLichSuPresenter.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Repositories/HangHoaRepository.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Repositories/LoaiHangRepository.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Repositories/TaiKhoanRepository.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Services/BieuDoGdiHelper.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Services/CsvHelperCustom.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Services/PhieuKhoPrintHelper.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Views/FrmNhaCungCap.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Views/FrmPhieuKho.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Views/FrmThongKeLichSu.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Views/IHangHoaView.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Views/ILoaiHangView.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Views/ILoginView.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Views/INhaCungCapView.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Views/IPhieuKhoView.cs}
+\lstinputlisting[language={[Sharp]C}]{../SourceCode/QuanLyKhoHang/QuanLyKhoHang/Views/IThongKeLichSuView.cs}
+\chapter{Phụ lục SQL}
+\lstinputlisting[language=SQL]{../Scripts/QuanLyKhoHangDB.sql}
+\lstinputlisting[language=SQL]{../Database/01_CreateDatabase.sql}
+\lstinputlisting[language=SQL]{../Database/03_ThanhVien3_StoredProcedures_DuLieu.sql}
+\chapter{Checklist bàn giao}
+\begin{longtable}{p{0.08\textwidth}p{0.65\textwidth}p{0.15\textwidth}}
+\toprule STT & Hạng mục & Xác nhận\\\midrule
+1 & Source mở được solution và build Release & \\
+2 & Database script, backup và dữ liệu mẫu & \\
+3 & Tài khoản demo và phân quyền & \\
+4 & CRUD danh mục và ràng buộc & \\
+5 & Phiếu nhập/xuất transaction & \\
+6 & Tồn kho, lịch sử, CSV, biểu đồ, in & \\
+7 & Test case và ảnh minh chứng & \\
+8 & Báo cáo đủ bố cục và phụ lục & \\
+\bottomrule
+\end{longtable}
+\end{document}

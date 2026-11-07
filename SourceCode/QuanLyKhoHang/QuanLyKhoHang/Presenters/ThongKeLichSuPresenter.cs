@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Windows.Forms;
 using QuanLyKhoHang.Services;
 using QuanLyKhoHang.Views;
@@ -45,7 +46,7 @@ namespace QuanLyKhoHang.Presenters
             try
             {
                 DateTime tuNgay = _view.TuNgay.Date;
-                DateTime denNgayChuan = _view.DenNgay.Date.AddDays(1);
+                DateTime denNgay = _view.DenNgay.Date;
                 string loaiPhieu = _view.LoaiPhieu;
                 string tuKhoa = _view.TuKhoaLichSu.Trim();
 
@@ -54,11 +55,11 @@ namespace QuanLyKhoHang.Presenters
                 {
                     dt = Database.GetDataProc("sp_TraCuuLichSuNhapXuat",
                         Database.Param("@TuNgay", tuNgay),
-                        Database.Param("@DenNgay", denNgayChuan),
+                        Database.Param("@DenNgay", denNgay),
                         Database.Param("@LoaiPhieu", loaiPhieu),
                         Database.Param("@TuKhoa", tuKhoa));
                 }
-                catch
+                catch (SqlException)
                 {
                     string sqlFallback = @"
                         SELECT 
@@ -89,7 +90,7 @@ namespace QuanLyKhoHang.Presenters
 
                     dt = Database.GetData(sqlFallback,
                         Database.Param("@TuNgay", tuNgay),
-                        Database.Param("@DenNgayChuan", denNgayChuan),
+                        Database.Param("@DenNgayChuan", denNgay.AddDays(1)),
                         Database.Param("@LoaiPhieu", loaiPhieu),
                         Database.Param("@TuKhoa", tuKhoa));
                 }
@@ -129,7 +130,7 @@ namespace QuanLyKhoHang.Presenters
                 {
                     dt = Database.GetDataProc("sp_LayChiTietPhieuDeIn", Database.Param("@MaPhieu", maPhieu));
                 }
-                catch
+                catch (SqlException)
                 {
                     string sql = @"
                         SELECT 
@@ -173,7 +174,7 @@ namespace QuanLyKhoHang.Presenters
                         Database.Param("@TuKhoa", tuKhoa),
                         Database.Param("@TrangThaiTon", trangThai));
                 }
-                catch
+                catch (SqlException)
                 {
                     string sqlFallback = @"
                         WITH BangThongKe AS (
@@ -254,14 +255,14 @@ namespace QuanLyKhoHang.Presenters
                         Database.Param("@TuNgay", tuNgay),
                         Database.Param("@DenNgay", denNgayChuan));
                 }
-                catch
+                catch (SqlException)
                 {
                     string sqlFallback = @"
                         SELECT 
                             h.MaHang,
                             h.TenHang,
-                            ISNULL(SUM(CASE WHEN p.LoaiPhieu = N'Nhập' AND p.NgayLap BETWEEN @TuNgay AND @DenNgay THEN ct.SoLuong ELSE 0 END), 0) AS TongNhap,
-                            ISNULL(SUM(CASE WHEN p.LoaiPhieu = N'Xuất' AND p.NgayLap BETWEEN @TuNgay AND @DenNgay THEN ct.SoLuong ELSE 0 END), 0) AS TongXuat,
+                            ISNULL(SUM(CASE WHEN p.LoaiPhieu = N'Nhập' AND p.NgayLap >= @TuNgay AND p.NgayLap < @DenNgay THEN ct.SoLuong ELSE 0 END), 0) AS TongNhap,
+                            ISNULL(SUM(CASE WHEN p.LoaiPhieu = N'Xuất' AND p.NgayLap >= @TuNgay AND p.NgayLap < @DenNgay THEN ct.SoLuong ELSE 0 END), 0) AS TongXuat,
                             h.SoLuongTon AS TonHienTai
                         FROM HangHoa h
                         LEFT JOIN ChiTietPhieu ct ON h.MaHang = ct.MaHang

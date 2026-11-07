@@ -99,8 +99,8 @@ BEGIN
     SELECT 
         h.MaHang,
         h.TenHang,
-        ISNULL(SUM(CASE WHEN p.LoaiPhieu = N'Nhập' AND p.NgayLap BETWEEN @TuNgay AND @DenNgay THEN ct.SoLuong ELSE 0 END), 0) AS TongNhap,
-        ISNULL(SUM(CASE WHEN p.LoaiPhieu = N'Xuất' AND p.NgayLap BETWEEN @TuNgay AND @DenNgay THEN ct.SoLuong ELSE 0 END), 0) AS TongXuat,
+        ISNULL(SUM(CASE WHEN p.LoaiPhieu = N'Nhập' AND p.NgayLap >= @TuNgay AND p.NgayLap < @DenNgay THEN ct.SoLuong ELSE 0 END), 0) AS TongNhap,
+        ISNULL(SUM(CASE WHEN p.LoaiPhieu = N'Xuất' AND p.NgayLap >= @TuNgay AND p.NgayLap < @DenNgay THEN ct.SoLuong ELSE 0 END), 0) AS TongXuat,
         h.SoLuongTon AS TonHienTai
     FROM HangHoa h
     LEFT JOIN ChiTietPhieu ct ON h.MaHang = ct.MaHang
